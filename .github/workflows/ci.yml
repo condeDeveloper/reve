@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.so }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        so: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # Os testes primeiro: sao eles que prendem os numeros das tabelas.
+      - name: Testes
+        run: dotnet test testes/Reve.Testes/Reve.Testes.csproj -c Release --nologo
+
+      # A varredura de 12 discos com 4 hastes abre 16.777.216 estados: e o passo
+      # mais pesado do repositorio, e e ele que confere a conta de 1941.
+      - name: A varredura contra a conta de Frame e Stewart
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- confronto
+
+      - name: Os cortes que alcancam o minimo
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- cortes
+
+      - name: O que a quarta e a quinta haste economizam
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- ganho
+
+      - name: Quantos estados a varredura alcanca
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- alcance
